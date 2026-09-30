@@ -1,0 +1,40 @@
+I. Phân tích Dữ liệu Hệ thống (I/O Analysis)1. Dữ liệu đầu vào (Input)n (int): Tổng số lượng giao dịch tiếp nhận trong ca ($N$).Cho mỗi giao dịch thứ $i$ ($1 \le i \le N$):drink_code (int): Mã đồ uống:-1: Tín hiệu ngắt khẩn cấp (Hardware failure / Emergency stop).0: Đơn khách hủy tại quầy (Order canceled).1: Phin Sữa Đá (29.000 VNĐ).2: Trà Sen Vàng (39.000 VNĐ).3: Freeze Cà Phê (49.000 VNĐ).size_code (int): Kích cỡ ly (1: Size S +0 VNĐ, 2: Size M +6.000 VNĐ, 3: Size L +10.000 VNĐ).topping_count (int): Số lượng phần topping thêm ($0 \le T \le 5$, đơn giá 8.000 VNĐ/phần).membership_status (int): Trạng thái thẻ hội viên (1: Gold Member - giảm 10%, 0: Khách thông thường).2. Dữ liệu đầu ra (Output)total_shift_revenue (long long): Tổng doanh thu lũy kế thực tế chốt được trong ca (VNĐ).valid_transactions (int): Tổng số đơn hàng hợp lệ đã thanh toán thành công.skipped_transactions (int): Tổng số đơn bị hủy hoặc lỗi dữ liệu bị bỏ qua.is_emergency_halted (int): Cờ đánh dấu ca bị ngắt do tín hiệu khẩn cấp hay kết thúc trọn vẹn.II. Đề xuất & So sánh Các Giải pháp (Trade-off Analysis)1. Khảo sát 2 giải pháp kiến trúcGiải pháp 1: Lối tư duy cũ (Legacy Nested if-else)Ý tưởng: Kiểm tra từng tầng điều kiện đúng nối tiếp nhau. Chỉ khi drink_code hợp lệ, tiếp tục lồng kiểm tra size_code, rồi lồng tiếp kiểm tra topping_count, cuối cùng tính tiền ở tầng sâu nhất.Hạn chế: Tạo thành kiến trúc hình kim tự tháp (Arrow Anti-Pattern). Khó ngắt ca tức thì khi xuất hiện -1 mà phải dùng các biến cờ hiệu (flag) rườm rà để truyền trạng thái qua từng tầng lồng nhau.Giải pháp 2: Tái cấu trúc bằng Guard Clauses (Phẳng hóa mã nguồn)Ý tưởng: Kiểm tra các điều kiện bất thường trước.Nếu gặp mã ngắt khẩn cấp (drink_code == -1): Thực hiện break ngay để bảo vệ tính toàn vẹn dữ liệu.Nếu gặp đơn hủy hoặc dữ liệu không hợp lệ (drink_code == 0, mã sai, size sai, topping sai): Cảnh báo, tăng biến đếm đơn bỏ qua và thực hiện continue ngay để dọn dẹp luồng xử lý.Nhánh tính tiền chính chỉ chạy khi toàn bộ dữ liệu đã được làm sạch, giữ độ sâu logic ở mức 0 hoặc 1.2. Bảng so sánh Trade-off giữa hai kiến trúcTiêu chí so sánhGiải pháp 1: Nested if-else (Legacy)Giải pháp 2: Guard Clauses + break/continue (Tối ưu)Độ sâu logic (Nesting Depth)3 đến 5 tầng lồng nhau, tạo khối mã dạng mũi tên thụt sâu sang phải.Phẳng (1 tầng duy nhất) bên trong vòng lặp for.Độ phức tạp duy trì (Maintainability)Rất khó đọc. Khi sửa quy tắc size hoặc topping dễ sót nhánh else.Rất cao. Tách biệt rõ ràng giữa khâu lọc dữ liệu lỗi và khâu tính tiền.Xử lý ngắt khẩn cấp (Emergency)Bắt buộc phải duy trì cờ hiệu phụ và kiểm tra điều kiện lặp phụ.Thoát ngay lập tức bằng break chỉ với 1 dòng lệnh.Tốc độ loại bỏ dữ liệu rácPhải chạy hết các nhánh điều kiện mới rơi vào else cuối cùng.Loại bỏ ngay lập tức ở đầu vòng lặp bằng continue, tiết kiệm chu kỳ CPU.Khả năng mở rộng nghiệp vụThêm món hoặc voucher mới sẽ làm tăng độ sâu lồng ghép.Thêm quy tắc mới chỉ cần bổ sung thêm một khối Guard Clause độc lập.Kết luận lựa chọn: Lựa chọn Giải pháp 2. Phương pháp Guard Clauses kết hợp break và continue giúp loại bỏ toàn bộ mã rườm rà, ngăn chặn triệt để hiện tượng sai sót logic, xử lý dứt điểm các Edge Cases và đảm bảo độ trễ thấp cho luồng dữ liệu thời gian thực.
+1. Nhập N.
+2. Nếu N <= 0:
+      In thông báo lỗi "So luong ca khong hop le", ket thuc chuong trinh.
+3. Khởi tạo:
+      total_shift_revenue = 0
+      valid_transactions = 0
+      skipped_transactions = 0
+4. Vòng lặp for i từ 1 đến N:
+      a. Nhập drink_code.
+      b. [Guard Clause 1 - Ngắt khẩn cấp]:
+         Nếu drink_code == -1:
+             In cảnh báo ngắt khẩn cấp.
+             break (thoát ngay khỏi vòng for).
+      c. [Guard Clause 2 - Hủy đơn hoặc Mã sai]:
+         Nếu drink_code == 0:
+             Tăng skipped_transactions.
+             continue.
+         Nếu drink_code không thuộc {1, 2, 3}:
+             Tăng skipped_transactions.
+             In cảnh báo mã món rác.
+             continue.
+      d. Nhập size_code và topping_count.
+      e. [Guard Clause 3 - Size hoặc Topping không hợp lệ]:
+         Nếu size_code không thuộc {1, 2, 3} hoặc topping_count < 0 hoặc topping_count > 5:
+             Tăng skipped_transactions.
+             In cảnh báo dữ liệu sai lệch.
+             continue.
+      f. Nhập membership_status.
+      g. [Tính toán tiền món]:
+         - Xác định base_price theo drink_code (1: 29000, 2: 39000, 3: 49000).
+         - Xác định size_surcharge theo size_code (1: 0, 2: 6000, 3: 10000).
+         - Tính topping_surcharge = topping_count * 8000.
+         - item_total = base_price + size_surcharge + topping_surcharge.
+         - Nếu membership_status == 1:
+               item_total = item_total * 90 / 100 (làm tròn số nguyên chuẩn VNĐ).
+      h. Cộng dồn:
+         - total_shift_revenue += item_total.
+         - Tăng valid_transactions.
+5. In báo cáo tổng kết doanh thu và tình trạng chốt ca.
